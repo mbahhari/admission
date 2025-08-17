@@ -12,6 +12,142 @@ const CRITERIA_WEIGHTS = {
     aptitudeTest: 0.30         // درجة اختبار القدرات 30%
 };
 
+// وزن سنة التخرج (يُضاف إلى المجموع الموزون لطلاب الثانوية العامة)
+const GRADUATION_YEAR_WEIGHT = 0.50; // سنة التخرج 50%
+
+// تحويل الأرقام العربية-الهندية إلى إنجليزية
+function convertArabicDigitsToEnglish(input) {
+    if (input == null) return '';
+    const str = input.toString();
+    const arabicIndic = '٠١٢٣٤٥٦٧٨٩';
+    const easternArabicIndic = '۰۱۲۳۴۵۶۷۸۹';
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+        const ch = str[i];
+        const idx1 = arabicIndic.indexOf(ch);
+        if (idx1 !== -1) {
+            result += idx1.toString();
+            continue;
+        }
+        const idx2 = easternArabicIndic.indexOf(ch);
+        if (idx2 !== -1) {
+            result += idx2.toString();
+            continue;
+        }
+        result += ch;
+    }
+    return result;
+}
+
+// الحصول على السنة الهجرية الحالية
+function getCurrentHijriYear() {
+    try {
+        const parts = new Intl.DateTimeFormat('en-u-ca-islamic', { year: 'numeric' }).formatToParts(new Date());
+        const yearPart = parts.find(p => p.type === 'year');
+        const yearNum = yearPart ? parseInt(yearPart.value, 10) : NaN;
+        if (!isNaN(yearNum)) return yearNum;
+    } catch (e) {
+        // تجاهل: قد لا يدعم المتصفح تقويم Islamic
+    }
+    // احتياطي تقريبي
+    return Math.round(new Date().getFullYear() - 578);
+}
+
+// تحويل سنة هجرية إلى سنة ميلادية مكافئة (تقريبية)
+function hijriToGregorianYear(hijriYear) {
+    if (!hijriYear) return null;
+    // لضمان توافق الأمثلة: 1447 -> 2025، 1446 -> 2024
+    return hijriYear + 578;
+}
+
+// تحويل تاريخ هجري تقريبي إلى ميلادي (باستخدام نفس اليوم/الشهر مع إزاحة سنة)
+function hijriToGregorianDateApprox(hDay, hMonth, hYear) {
+    const gYear = hijriToGregorianYear(hYear);
+    if (!gYear) return null;
+    const monthIndex = Math.max(0, Math.min(11, (hMonth || 1) - 1));
+    const dayValue = Math.max(1, Math.min(28, hDay || 1));
+    try {
+        return new Date(gYear, monthIndex, dayValue);
+    } catch (e) {
+        return null;
+    }
+}
+
+// تحليل تاريخ هجري بصيغة dd/mm/yyyy (يدعم الأرقام العربية)
+function parseHijriDmyString(raw) {
+    if (!raw) return { day: null, month: null, year: null };
+    const normalized = convertArabicDigitsToEnglish(raw).trim();
+    const parts = normalized.split(/[\/-]/);
+    if (parts.length !== 3) return { day: null, month: null, year: null };
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return { day: null, month: null, year: null };
+    return { day, month, year };
+}
+
+// استخراج سنة مكونة من 4 خانات من نص ما (بعد تحويل الأرقام العربية)
+function extractFourDigitYearFromString(raw) {
+    if (!raw) return null;
+    const normalized = convertArabicDigitsToEnglish(raw).trim();
+    const match = normalized.match(/(\d{4})/);
+    if (!match) return null;
+    const year = parseInt(match[1], 10);
+    if (isNaN(year)) return null;
+    return year;
+}
+
+// حساب العمر بالسنوات من تاريخ ميلادي
+function computeAgeYearsFromGregorianDate(gregDate) {
+    if (!gregDate) return null;
+    const today = new Date();
+    let age = today.getFullYear() - gregDate.getFullYear();
+    const m = today.getMonth() - gregDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < gregDate.getDate())) {
+        age--;
+    }
+    return age;
+}
+
+// استخراج سنة رقمية ونوع التقويم من نص سنة التخرج
+function parseGraduationYear(rawValue) {
+    if (rawValue == null) return { year: null, calendar: null };
+    const normalized = convertArabicDigitsToEnglish(rawValue).trim();
+    const match = normalized.match(/(\d{4})/);
+    if (!match) return { year: null, calendar: null };
+    const year = parseInt(match[1], 10);
+    // تحديد نوع التقويم بناءً على المجال
+    if (year >= 1300 && year <= 1600) {
+        return { year, calendar: 'hijri' };
+    }
+    if (year >= 1900 && year <= 2100) {
+        return { year, calendar: 'gregorian' };
+    }
+    return { year: null, calendar: null };
+}
+
+// حساب درجة سنة التخرج (100/90/80/70/60/50) وفارق السنوات بناءً على السنة الميلادية المكافئة
+function computeGraduationYearScore(year, calendar) {
+    if (!year || !calendar) return { diffYears: null, score: 0 };
+    const currentGregorian = new Date().getFullYear();
+    let normalizedGradYear = year;
+    if (calendar === 'hijri') {
+        normalizedGradYear = hijriToGregorianYear(year);
+    }
+    let diff = currentGregorian - (normalizedGradYear || 0);
+    if (diff < 0) diff = 0;
+    let score = 0;
+    // خريج السنة الحالية = 100، الأولى = 90 ... الخامسة = 50
+    if (diff === 0) score = 100;
+    else if (diff === 1) score = 90;
+    else if (diff === 2) score = 80;
+    else if (diff === 3) score = 70;
+    else if (diff === 4) score = 60;
+    else if (diff === 5) score = 50;
+    else score = 0; // أكبر من 5 سنوات
+    return { diffYears: diff, score };
+}
+
 // تهيئة الصفحة
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
@@ -86,6 +222,7 @@ function handleFileUpload(event) {
 function processExcelData(jsonData) {
     const headers = jsonData[0];
     applicantsData = [];
+    excludedApplicants = []; // إعادة تعيين المستبعدين عند معالجة ملف جديد
     
     // البحث عن أعمدة البيانات المطلوبة
     const columnMap = findDataColumns(headers);
@@ -99,13 +236,46 @@ function processExcelData(jsonData) {
     for (let i = 1; i < jsonData.length; i++) {
         const row = jsonData[i];
         if (row.length === 0) continue;
-        
+        const rawGraduationYear = columnMap.graduationYear !== -1 ? row[columnMap.graduationYear] : '';
+        const { year: gradYearNumeric, calendar: gradCalendar } = parseGraduationYear(rawGraduationYear);
+        const normalizedGregorianYear = gradCalendar === 'hijri' ? hijriToGregorianYear(gradYearNumeric) : gradYearNumeric;
+        const { diffYears: gradYearDiff, score: gradYearScore } = computeGraduationYearScore(gradYearNumeric, gradCalendar);
+        const autoExcludedByYear = gradYearDiff != null && gradYearDiff > 5;
+
+        // تاريخ الميلاد الهجري - نحتفظ فقط بسنة من 4 خانات
+        const rawBirthHijri = (columnMap.birthHijri !== undefined && columnMap.birthHijri !== -1) ? row[columnMap.birthHijri] : '';
+        let birthHYear = null;
+        // محاولة قراءة dd/mm/yyyy أولاً
+        const parsedHijriDmy = parseHijriDmyString(rawBirthHijri || '');
+        if (parsedHijriDmy.year && String(parsedHijriDmy.year).length === 4) {
+            birthHYear = parsedHijriDmy.year;
+        } else {
+            // وإلا نستخرج أي سنة من 4 خانات من النص
+            const yearOnly = extractFourDigitYearFromString(rawBirthHijri || '');
+            if (yearOnly && String(yearOnly).length === 4) {
+                birthHYear = yearOnly;
+            }
+        }
+        const birthGregorianDate = (birthHYear) ? hijriToGregorianDateApprox(1, 1, birthHYear) : null;
+        const ageYears = birthGregorianDate ? computeAgeYearsFromGregorianDate(birthGregorianDate) : null;
+        const autoExcludedByAge = ageYears != null && ageYears > 25;
+
         const applicant = {
             name: row[columnMap.name] || `متقدم ${i}`,
             highSchoolGPA: parseFloat(row[columnMap.highSchoolGPA]) || 0,
             achievementTest: parseFloat(row[columnMap.achievementTest]) || 0,
             aptitudeTest: parseFloat(row[columnMap.aptitudeTest]) || 0,
-            graduationYear: row[columnMap.graduationYear] || '',
+            graduationYear: rawGraduationYear || '',
+            graduationYearNumeric: gradYearNumeric || null,
+            graduationCalendar: gradCalendar || null,
+            graduationYearNormalized: normalizedGregorianYear || null,
+            graduationYearDiff: gradYearDiff,
+            graduationYearScore: gradYearScore,
+            excludedByYear: autoExcludedByYear,
+            birthHijri: birthHYear || '',
+            birthGregorianDate: birthGregorianDate,
+            ageYears: ageYears,
+            excludedByAge25: autoExcludedByAge,
             originalIndex: i
         };
         
@@ -116,14 +286,36 @@ function processExcelData(jsonData) {
             achievement: applicant.achievementTest,
             aptitude: applicant.aptitudeTest,
             schoolType: getSchoolType(applicant),
+            gradYear: applicant.graduationYear,
+            gradYearNumeric: applicant.graduationYearNumeric,
+            gradCalendar: applicant.graduationCalendar,
+            gradYearNormalized: applicant.graduationYearNormalized,
+            gradDiff: applicant.graduationYearDiff,
+            gradScore: applicant.graduationYearScore,
+            birthHijri: applicant.birthHijri,
+            birthGregorian: applicant.birthGregorianDate,
+            ageYears: applicant.ageYears,
+            excludedByAge25: applicant.excludedByAge25,
+            excludedByYear: applicant.excludedByYear,
             isValid: isValidApplicant(applicant)
         });
         
-        // التحقق من صحة البيانات
+        // التحقق من صحة البيانات مع تطبيق قاعدة الاستبعاد (>5 سنوات)
         if (isValidApplicant(applicant)) {
             applicantsData.push(applicant);
         } else {
             console.log(`تم رفض المتقدم ${i}: ${applicant.name} - المعدل: ${applicant.highSchoolGPA}`);
+            const reasons = [];
+            if (applicant.excludedByYear) reasons.push('سنة التخرج أقدم من 5 سنوات');
+            if (applicant.excludedByAge25) reasons.push('العمر أكبر من 25 سنة');
+            if (reasons.length > 0) {
+                excludedApplicants.push({
+                    ...applicant,
+                    schoolType: getSchoolType(applicant) === 'industrial' ? 'industrial' : 'general',
+                    excludedAt: new Date(),
+                    excludedReason: `تم الاستبعاد تلقائياً: ${reasons.join(' و ')}`
+                });
+            }
         }
     }
     
@@ -133,7 +325,9 @@ function processExcelData(jsonData) {
         gpa: a.highSchoolGPA,
         achievement: a.achievementTest,
         aptitude: a.aptitudeTest,
-        year: a.graduationYear
+        year: a.graduationYear,
+        birth: a.birthHijri,
+        age: a.ageYears
     })));
     
     // ملء قائمة السنوات المتاحة
@@ -148,6 +342,7 @@ function findDataColumns(headers) {
         achievementTest: -1,
         aptitudeTest: -1,
         graduationYear: -1,
+        birthHijri: -1,
         isValid: false
     };
     
@@ -183,6 +378,16 @@ function findDataColumns(headers) {
             headerStr.includes('year') || headerStr.includes('تاريخ')) {
             columnMap.graduationYear = index;
         }
+
+        // تاريخ الميلاد (هجري)
+        if (
+            headerStr.includes('ميلاد') ||
+            headerStr.includes('تاريخ الميلاد') ||
+            headerStr.includes('birth') ||
+            headerStr.includes('dob')
+        ) {
+            columnMap.birthHijri = index;
+        }
     });
     
     // التحقق من وجود جميع الأعمدة المطلوبة
@@ -208,13 +413,15 @@ function populateGraduationYears() {
     
     // جمع السنوات الفريدة من البيانات
     applicantsData.forEach(applicant => {
-        if (applicant.graduationYear && applicant.graduationYear.toString().trim() !== '') {
-            years.add(applicant.graduationYear.toString().trim());
+        if (applicant.graduationYearNormalized != null) {
+            years.add(String(applicant.graduationYearNormalized));
+        } else if (applicant.graduationYear && applicant.graduationYear.toString().trim() !== '') {
+            years.add(convertArabicDigitsToEnglish(applicant.graduationYear.toString().trim()));
         }
     });
     
     // تحويل إلى مصفوفة وترتيبها
-    availableYears = Array.from(years).sort((a, b) => b - a); // ترتيب تنازلي
+    availableYears = Array.from(years).sort((a, b) => parseInt(b, 10) - parseInt(a, 10)); // ترتيب تنازلي
     
     // مسح الخيارات الحالية
     yearSelect.innerHTML = '';
@@ -245,6 +452,18 @@ function isValidApplicant(applicant) {
         return false;
     }
     
+    // استبعاد إذا تجاوزت سنة التخرج 5 سنوات (إن وُجدت)
+    if (applicant.excludedByYear) {
+        console.log(`رفض ${applicant.name}: سنة التخرج (${applicant.graduationYear}) أقدم من 5 سنوات`);
+        return false;
+    }
+
+    // استبعاد إذا كان العمر أكبر من 25 سنة (إن وُجد)
+    if (applicant.excludedByAge25) {
+        console.log(`رفض ${applicant.name}: العمر (${applicant.ageYears}) أكبر من 25 سنة`);
+        return false;
+    }
+
     // تحديد نوع الثانوية
     const schoolType = getSchoolType(applicant);
     
@@ -289,23 +508,14 @@ function filterByGraduationYear() {
         console.log('تم عرض جميع المتقدمين: جميع السنوات');
         updateFilterInfo('جميع السنوات', filteredApplicants.length);
     } else {
-        // تصفية المتقدمين: الثانوية الصناعية تظهر دائماً، الثانوية العامة حسب السنة
+        // تصفية المتقدمين: كلا النوعين يجب أن يطابق سنة التخرج المحددة
         filteredApplicants = sortedApplicants.filter(applicant => {
-            // طلاب الثانوية الصناعية يظهرون دائماً بغض النظر عن السنة
-            if (applicant.schoolType === 'industrial') {
-                console.log(`إضافة طالب ثانوية صناعية: ${applicant.name} - المعدل: ${applicant.highSchoolGPA}`);
-                return true;
-            }
-            
-            // طلاب الثانوية العامة يظهرون فقط إذا كانت سنة تخرجهم مطابقة
-            if (applicant.schoolType === 'general') {
-                const matchesYear = applicant.graduationYear && 
-                                  selectedYears.includes(applicant.graduationYear.toString().trim());
-                console.log(`طالب ثانوية عامة: ${applicant.name} - السنة: ${applicant.graduationYear} - مطابق: ${matchesYear}`);
-                return matchesYear;
-            }
-            
-            return false;
+            const yearValue = applicant.graduationYearNormalized != null
+                ? String(applicant.graduationYearNormalized)
+                : (applicant.graduationYear ? convertArabicDigitsToEnglish(applicant.graduationYear.toString().trim()) : '');
+            const matchesYear = yearValue && selectedYears.includes(yearValue);
+            console.log(`تصفية حسب السنة: ${applicant.name} - النوع: ${applicant.schoolType} - السنة: ${applicant.graduationYear} (معياري: ${yearValue}) - مطابق: ${matchesYear}`);
+            return matchesYear;
         });
         
         const industrialCount = filteredApplicants.filter(a => a.schoolType === 'industrial').length;
@@ -336,11 +546,6 @@ function updateFilterInfo(selectedYearsText, count) {
     const generalCount = filteredApplicants.filter(a => a.schoolType === 'general').length;
     
     let schoolTypeInfo = `صناعية: ${industrialCount} | عامة: ${generalCount}`;
-    
-    // إضافة ملاحظة خاصة إذا تم اختيار سنوات محددة
-    if (selectedYearsText !== 'جميع السنوات') {
-        schoolTypeInfo += ' (الثانوية الصناعية تظهر دائماً)';
-    }
     
     // إضافة معلومات عن الجداول المنفصلة
     schoolTypeInfo += ` | الجداول: منفصلة`;
@@ -378,7 +583,7 @@ function sortApplicants() {
                 ...applicant,
                 schoolType: 'industrial',
                 gpaPercentage: Math.round(gpaPercentage * 100) / 100,
-                weightedScore: gpaPercentage // استخدام المعدل كنسبة مئوية للترتيب
+                weightedScore: gpaPercentage // استخدام المعدل كنسبة مئوية للترتيب داخل الصناعي
             };
             industrialApplicants.push(industrialApplicant);
             console.log(`إضافة طالب ثانوية صناعية: ${applicant.name} - المعدل: ${applicant.highSchoolGPA} - النسبة: ${industrialApplicant.gpaPercentage}%`);
@@ -387,7 +592,8 @@ function sortApplicants() {
             const weightedScore = 
                 (applicant.highSchoolGPA * CRITERIA_WEIGHTS.highSchoolGPA) +
                 (applicant.achievementTest * CRITERIA_WEIGHTS.achievementTest) +
-                (applicant.aptitudeTest * CRITERIA_WEIGHTS.aptitudeTest);
+                (applicant.aptitudeTest * CRITERIA_WEIGHTS.aptitudeTest) +
+                ((applicant.graduationYearScore || 0) * GRADUATION_YEAR_WEIGHT);
             
             const generalApplicant = {
                 ...applicant,
@@ -464,7 +670,8 @@ function displayIndustrialResults(candidateCount) {
             <td>${applicant.highSchoolGPA} (من 5)</td>
             <td>${applicant.achievementTest}</td>
             <td>${applicant.aptitudeTest}</td>
-            <td>${applicant.graduationYear || '-'}</td>
+            <td>${(applicant.graduationYearNormalized != null ? applicant.graduationYearNormalized : (applicant.graduationYear || '-'))}</td>
+            <td>${applicant.birthHijri || '-'}</td>
             <td class="weighted-score">${applicant.gpaPercentage}%</td>
             <td>
                 <button class="exclude-btn" onclick="excludeCandidate(${applicant.originalIndex}, 'industrial')" title="استبعاد المرشح">
@@ -517,7 +724,8 @@ function displayGeneralResults(candidateCount, industrialCount = 0) {
             <td>${applicant.highSchoolGPA} (من 100)</td>
             <td>${applicant.achievementTest}</td>
             <td>${applicant.aptitudeTest}</td>
-            <td>${applicant.graduationYear || '-'}</td>
+            <td>${(applicant.graduationYearNormalized != null ? applicant.graduationYearNormalized : (applicant.graduationYear || '-'))}</td>
+            <td>${applicant.birthHijri || '-'}</td>
             <td class="weighted-score">${applicant.weightedScore}</td>
             <td>
                 <button class="exclude-btn" onclick="excludeCandidate(${applicant.originalIndex}, 'general')" title="استبعاد المرشح">
@@ -635,16 +843,12 @@ function refreshResultsAfterExclusion() {
         // عرض جميع المتقدمين المتاحين
         filteredApplicants = [...availableApplicants];
     } else {
-        // تصفية المتقدمين: الثانوية الصناعية تظهر دائماً، الثانوية العامة حسب السنة
+        // تصفية المتقدمين: كلا النوعين يجب أن يطابق سنة التخرج المحددة
         filteredApplicants = availableApplicants.filter(applicant => {
-            if (applicant.schoolType === 'industrial') {
-                return true;
-            }
-            if (applicant.schoolType === 'general') {
-                return applicant.graduationYear && 
-                       selectedYears.includes(applicant.graduationYear.toString().trim());
-            }
-            return false;
+            const yearValue = applicant.graduationYearNormalized != null
+                ? String(applicant.graduationYearNormalized)
+                : (applicant.graduationYear ? convertArabicDigitsToEnglish(applicant.graduationYear.toString().trim()) : '');
+            return yearValue && selectedYears.includes(yearValue);
         });
     }
     
@@ -688,6 +892,7 @@ function displayExcludedCandidates() {
             <td class="rank">${index + 1}</td>
             <td>${excluded.name}</td>
             <td class="school-type">${excluded.schoolType === 'industrial' ? 'صناعية' : 'عامة'}</td>
+            <td>${excluded.birthHijri || '-'}</td>
             <td>${excluded.excludedAt.toLocaleDateString('ar-SA')}</td>
             <td>${excluded.excludedReason}</td>
         `;
@@ -828,13 +1033,7 @@ function exportToExcel() {
         console.log(`تم إضافة ${excludedApplicants.length} مرشح مستبعد للتصدير`);
     }
     
-    // إضافة ملاحظة خاصة حول قاعدة التصفية
-    if (selectedYearsText !== 'جميع السنوات') {
-        exportData.push([]);
-        exportData.push(['ملاحظة: طلاب الثانوية الصناعية يظهرون دائماً بغض النظر عن السنة']);
-        exportData.push(['طلاب الثانوية العامة يظهرون فقط حسب السنة المختارة']);
-        console.log('تم إضافة ملاحظة قاعدة التصفية للتصدير');
-    }
+    // إزالة الملاحظة القديمة: كلا النوعين يُصفّى حسب السنة عند تحديدها
     
     exportData.push(['تاريخ التصدير:', new Date().toLocaleDateString('ar-SA')]);
     
