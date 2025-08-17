@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام ترتيب المتقدمين</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>نظام ترتيب المتقدمين</h1>
+            <p>قم برفع ملف الإكسل لترتيب المتقدمين حسب المعايير المحددة</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <h2>رفع ملف الإكسل</h2>
+                <div class="file-upload">
+                    <input type="file" id="excelFile" accept=".xlsx,.xls" />
+                    <label for="excelFile" class="upload-btn">
+                        <span>اختر ملف الإكسل</span>
+                    </label>
+                </div>
+                <p class="file-info" id="fileInfo"></p>
+            </section>
+
+            <section class="criteria-section">
+                <h2>معايير التقييم</h2>
+                <div class="criteria-list">
+                    <div class="criteria-item">
+                        <div class="percentage">50%</div>
+                        <div>معدل الثانوي التراكمي</div>
+                    </div>
+                    <div class="criteria-item">
+                        <div class="percentage">20%</div>
+                        <div>درجة اختبار التحصيلي</div>
+                    </div>
+                    <div class="criteria-item">
+                        <div class="percentage">30%</div>
+                        <div>درجة اختبار القدرات</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <h2>نتائج الترتيب</h2>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="graduationYear">سنة التخرج من الثانوية:</label>
+                        <select id="graduationYear" class="year-select" multiple>
+                            <option value="">جميع السنوات</option>
+                        </select>
+                        <small class="help-text">اضغط Ctrl (أو Cmd) لاختيار أكثر من سنة</small>
+                    </div>
+                    <div class="control-group">
+                        <label for="candidateCount">عدد المرشحين المطلوب:</label>
+                        <input type="number" id="candidateCount" min="1" value="10" />
+                    </div>
+                    <button id="exportBtn" class="export-btn">تصدير المرشحين إلى إكسل</button>
+                </div>
+                
+                <div class="filter-info" id="filterInfo">
+                    <p>تم اختيار: <span id="selectedYearsInfo">جميع السنوات</span></p>
+                    <p>عدد المتقدمين المفلترين: <span id="filteredCount">0</span></p>
+                    <p>التوزيع: <span id="schoolTypeInfo">-</span></p>
+                </div>
+                
+                <div class="results-table">
+                    <table id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>الترتيب</th>
+                                <th>اسم المتقدم</th>
+                                <th>معدل الثانوي التراكمي</th>
+                                <th>درجة اختبار التحصيلي</th>
+                                <th>درجة اختبار القدرات</th>
+                                <th>سنة التخرج</th>
+                                <th>المجموع الموزون</th>
+                                <th>نوع الثانوية</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
