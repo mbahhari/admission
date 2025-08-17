@@ -1,0 +1,49 @@
+# ملفات النظام
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ملفات IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ملفات مؤقتة
+*.tmp
+*.temp
+*.log
+
+# ملفات Excel المؤقتة
+~$*.xlsx
+~$*.xls
+
+# ملفات التصدير
+المرشحون_المختارون_*.xlsx
+
+# ملفات Node.js (إذا تم إضافتها لاحقاً)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ملفات البيئة
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ملفات النسخ الاحتياطية
+*.bak
+*.backup
+*.old
+
+# ملفات الضغط
+*.zip
+*.rar
+*.7z
+
+# ملفات PDF (إذا تم إضافتها لاحقاً)
+*.pdf
