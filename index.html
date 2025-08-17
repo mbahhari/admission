@@ -67,26 +67,76 @@
                     <p>التوزيع: <span id="schoolTypeInfo">-</span></p>
                 </div>
                 
-                <div class="results-table">
-                    <table id="resultsTable">
-                        <thead>
-                            <tr>
-                                <th>الترتيب</th>
-                                <th>اسم المتقدم</th>
-                                <th>معدل الثانوي التراكمي</th>
-                                <th>درجة اختبار التحصيلي</th>
-                                <th>درجة اختبار القدرات</th>
-                                <th>سنة التخرج</th>
-                                <th>المجموع الموزون</th>
-                                <th>نوع الثانوية</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resultsBody">
-                        </tbody>
-                    </table>
+                <!-- جدول طلاب الثانوية الصناعية -->
+                <div class="results-section-industrial">
+                    <h3>طلاب الثانوية الصناعية (أولوية مطلقة)</h3>
+                    <div class="results-table">
+                        <table id="industrialTable">
+                                                <thead>
+                        <tr>
+                            <th>الترتيب</th>
+                            <th>اسم المتقدم</th>
+                            <th>معدل الثانوي التراكمي</th>
+                            <th>درجة اختبار التحصيلي</th>
+                            <th>درجة اختبار القدرات</th>
+                            <th>سنة التخرج</th>
+                            <th>المعدل المحول</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                            <tbody id="industrialBody">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </section>
-        </main>
+
+                <!-- جدول طلاب الثانوية العامة -->
+                <div class="results-section-general">
+                    <h3>طلاب الثانوية العامة (مع تطبيق المعايير)</h3>
+                    <div class="results-table">
+                        <table id="generalTable">
+                                                <thead>
+                        <tr>
+                            <th>الترتيب</th>
+                            <th>اسم المتقدم</th>
+                            <th>معدل الثانوي التراكمي</th>
+                            <th>درجة اختبار التحصيلي</th>
+                            <th>درجة اختبار القدرات</th>
+                            <th>سنة التخرج</th>
+                            <th>المجموع الموزون</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                            <tbody id="generalBody">
+                            </tbody>
+                        </table>
+                    </div>
+                        </div>
+    </section>
+    
+    <!-- قسم المرشحين المستبعدين -->
+    <section id="excludedSection" style="display: none;">
+        <h2>المرشحون المستبعدون</h2>
+        <div class="excluded-info">
+            <p>عدد المرشحين المستبعدين: <span id="excludedCount">0</span></p>
+        </div>
+        <div class="results-table">
+            <table id="excludedTable">
+                <thead>
+                    <tr>
+                        <th>الترتيب</th>
+                        <th>اسم المتقدم</th>
+                        <th>نوع الثانوية</th>
+                        <th>تاريخ الاستبعاد</th>
+                        <th>سبب الاستبعاد</th>
+                    </tr>
+                </thead>
+                <tbody id="excludedBody">
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
     </div>
 
     <script src="script.js"></script>

@@ -269,10 +269,36 @@ section h2 {
     box-shadow: 0 4px 12px rgba(73, 80, 87, 0.3);
 }
 
+.results-section-industrial,
+.results-section-general {
+    margin-bottom: 30px;
+}
+
+.results-section-industrial h3,
+.results-section-general h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 10px;
+    font-weight: 600;
+}
+
+.results-section-industrial h3 {
+    color: #1976d2;
+    border-bottom-color: #bbdefb;
+}
+
+.results-section-general h3 {
+    color: #7b1fa2;
+    border-bottom-color: #e1bee7;
+}
+
 .results-table {
     overflow-x: auto;
     border: 1px solid #dee2e6;
     border-radius: 8px;
+    margin-bottom: 20px;
 }
 
 table {
@@ -365,6 +391,58 @@ button:focus {
 .upload-btn:active,
 .export-btn:active {
     transform: translateY(0);
+}
+
+/* تنسيق زر الاستبعاد */
+.exclude-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.3s;
+}
+
+.exclude-btn:hover {
+    background-color: #c82333;
+}
+
+.exclude-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* تنسيق قسم المرشحين المستبعدين */
+#excludedSection {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+}
+
+#excludedSection h2 {
+    color: #856404;
+    border-bottom-color: #ffeaa7;
+}
+
+.excluded-info {
+    background: #fff8e1;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #ffeaa7;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.excluded-info p {
+    margin: 0;
+    color: #856404;
+    font-weight: 500;
+}
+
+.excluded-info span {
+    font-weight: 700;
+    color: #d63031;
 }
 
 /* تحسينات للشاشات الصغيرة */

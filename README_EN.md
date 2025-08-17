@@ -19,10 +19,12 @@ A sophisticated web system for ranking university admission applicants based on 
 ### 🔍 Advanced Filtering
 - **Graduation Year Filter**: Select one or multiple years
 - **Multi-Year Selection**: Support for selecting multiple years at once
+- **Special Rule**: Industrial high school students always appear regardless of graduation year
 - **Real-time Statistics**: Display filtered applicant count
 
 ### 📁 Data Management
 - **Excel File Upload**: Support for .xlsx and .xls formats
+- **Separate Tables**: Display industrial and general high school students in separate tables
 - **Results Export**: Export selected candidates to Excel file
 - **Smart Formatting**: Clear data display with school type distinction
 
@@ -85,10 +87,55 @@ A sophisticated web system for ranking university admission applicants based on 
 - Convert GPA to percentage: `(GPA ÷ 5) × 100`
 - Sort descending by converted GPA
 - Other criteria not applied
+- **Absolute Priority**: Always appear in results regardless of graduation year
 
 ### For General High School (GPA from 100):
 - Calculate weighted score: `(GPA × 0.5) + (Achievement × 0.2) + (Aptitude × 0.3)`
 - Sort descending by weighted score
+- **Year Filtering**: Only appear if their graduation year matches selected years
+
+## 📅 Year Filtering Rules
+
+### When selecting "All Years":
+- **All applicants** appear (industrial and general)
+
+### When selecting specific years:
+- **Industrial High School Students**: **Always** appear regardless of graduation year
+- **General High School Students**: **Only** appear if their graduation year matches selected years
+
+### Practical Example:
+```
+Selecting year 2023:
+- Industrial student graduated 2022 → Appears ✅
+- Industrial student graduated 2023 → Appears ✅  
+- General student graduated 2023 → Appears ✅
+- General student graduated 2022 → Does not appear ❌
+```
+
+## 📊 Separate Tables System
+
+### Industrial High School Table:
+- **Absolute Priority**: Always appear in results
+- **No Criteria Applied**: Depends only on converted GPA
+- **Converted GPA**: GPA displayed as percentage (from 100)
+- **Descending Order**: By converted GPA
+
+### General High School Table:
+- **With Applied Criteria**: GPA 50% + Achievement 20% + Aptitude 30%
+- **Year Filtering**: Only appear according to selected year
+- **Weighted Score**: Final result displayed
+- **Descending Order**: By weighted score
+
+### Display Example:
+```
+Industrial High School Table (Absolute Priority):
+1. Ahmed Mohamed - GPA 4.5 - Converted GPA: 90%
+2. Fatima Ali - GPA 4.2 - Converted GPA: 84%
+
+General High School Table (With Applied Criteria):
+1. Khalid Ahmed - GPA 95 - Weighted Score: 87.5
+2. Sara Mohamed - GPA 88 - Weighted Score: 82.4
+```
 
 ## 📱 Responsive Design
 
