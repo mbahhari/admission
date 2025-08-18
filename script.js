@@ -1014,24 +1014,8 @@ function exportToExcel() {
     
     console.log('تم إضافة معلومات الجداول المنفصلة للتصدير');
     
-    // إضافة معلومات عن المرشحين المستبعدين
-    if (excludedApplicants.length > 0) {
-        exportData.push([]);
-        exportData.push(['المرشحون المستبعدون:']);
-        exportData.push(['الترتيب', 'اسم المتقدم', 'نوع الثانوية', 'تاريخ الاستبعاد', 'سبب الاستبعاد']);
-        
-        excludedApplicants.forEach((excluded, index) => {
-            exportData.push([
-                index + 1,
-                excluded.name,
-                excluded.schoolType === 'industrial' ? 'صناعية' : 'عامة',
-                excluded.excludedAt.toLocaleDateString('ar-SA'),
-                excluded.excludedReason
-            ]);
-        });
-        
-        console.log(`تم إضافة ${excludedApplicants.length} مرشح مستبعد للتصدير`);
-    }
+    // لا يتم تصدير المرشحين المستبعدين (تم استبعادهم مسبقاً من filteredApplicants)
+    console.log(`تم استبعاد ${excludedApplicants.length} مرشح من التصدير`);
     
     // إزالة الملاحظة القديمة: كلا النوعين يُصفّى حسب السنة عند تحديدها
     
@@ -1042,6 +1026,12 @@ function exportToExcel() {
     
     // إنشاء ورقة عمل
     const worksheet = XLSX.utils.aoa_to_sheet(exportData);
+    
+    // تعيين اتجاه الورقة من اليمين إلى اليسار
+    if (!worksheet['!views']) {
+        worksheet['!views'] = [];
+    }
+    worksheet['!views'][0] = { RTL: true };
     
     // تنسيق الأعمدة
     const columnWidths = [
@@ -1056,7 +1046,27 @@ function exportToExcel() {
     ];
     worksheet['!cols'] = columnWidths;
     
-    console.log('تم تطبيق تنسيق الأعمدة');
+    // تطبيق تنسيق RTL على جميع الخلايا
+    for (let rowIndex = 0; rowIndex < exportData.length; rowIndex++) {
+        for (let colIndex = 0; colIndex < exportData[rowIndex].length; colIndex++) {
+            const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: colIndex });
+            if (!worksheet[cellAddress]) {
+                worksheet[cellAddress] = { v: exportData[rowIndex][colIndex] };
+            }
+            // تعيين تنسيق RTL للخلايا
+            if (!worksheet[cellAddress].s) {
+                worksheet[cellAddress].s = {};
+            }
+            worksheet[cellAddress].s = {
+                alignment: {
+                    horizontal: 'right',
+                    vertical: 'center'
+                }
+            };
+        }
+    }
+    
+    console.log('تم تطبيق تنسيق الأعمدة واتجاه RTL');
     
     // إنشاء ملف العمل
     const workbook = XLSX.utils.book_new();
